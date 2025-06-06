@@ -1,0 +1,7 @@
+streamlit 
+pandas 
+requests 
+openpyxl 
+xlsxwriter 
+python-dateutil 
+ibm-cos-sdk
