@@ -5,3 +5,4 @@ openpyxl
 xlsxwriter 
 python-dateutil 
 ibm-cos-sdk
+xlwings
