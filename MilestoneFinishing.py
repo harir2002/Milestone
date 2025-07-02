@@ -22,13 +22,15 @@ from EwsLig import *
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
-from Eligo import *
+from milestone import Eligo
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 from Tower4 import *
 from Tower5 import *
-
+from Tower4 import process_file_Tower4
+from Tower5 import process_file_Tower5
+import re
 
 def process_activity_data(data):
     """Process JSON data and create activity count by month"""
@@ -185,39 +187,45 @@ st.write(files)
 tower4df = None
 tower5df = None
 
-if st.session_state.tower4df.empty:
-    for file in files:
-    
+def extract_date_from_filename(filename):
+    # Match date in format (dd-mm-yyyy) or (dd-mm-yyyy) with possible spaces
+    match = re.search(r'\((\d{2})-(\d{2})-(\d{4})\)', filename.replace(" ", ""))
+    if match:
+        day, month, year = match.groups()
         try:
-            if file.startswith("Veridia") and "Tower 5 Finishing Tracker" in file:
-            
-                st.write("✅ Current month:", file)
-                response = cos_client.get_object(Bucket="projectreportnew", Key=file)
-                st.session_state.tower5df, name = process_file_Tower5(io.BytesIO(response['Body'].read()))
+            return datetime(int(year), int(month), int(day))
+        except ValueError:
+            return None
+    return None
 
-                break
-                # elif prev_month_year in file:
-                #     st.write("🕓 Previous month:", file)
-                #     response = cos_client.get_object(Bucket="projectreportnew", Key=file)
-                #     GetTower5Finishing(io.BytesIO(response['Body'].read()))
-        except Exception as e:
-            st.info(e)
+# Find latest file for each tower
+latest_tower4_file = None
+latest_tower4_date = None
+latest_tower5_file = None
+latest_tower5_date = None
 
-    for file in files:
-        
-        try:
-            if file.startswith("Veridia") and "Tower 4 Finishing Tracker" in file:
-            
-                st.write("✅ Current month:", file)
-                response = cos_client.get_object(Bucket="projectreportnew", Key=file)
-                st.session_state.tower4df, name = process_file_Tower4(io.BytesIO(response['Body'].read()))
-                break
-                # elif prev_month_year in file:
-                #     st.write("🕓 Previous month:", file)
-                #     response = cos_client.get_object(Bucket="projectreportnew", Key=file)
-                #     GetTower5Finishing(io.BytesIO(response['Body'].read()))
-        except Exception as e:
-            st.info(e)
+for file in files:
+    if "Tower 4 Finishing Tracker" in file:
+        file_date = extract_date_from_filename(file)
+        if file_date and (latest_tower4_date is None or file_date > latest_tower4_date):
+            latest_tower4_date = file_date
+            latest_tower4_file = file
+    elif "Tower 5 Finishing Tracker" in file:
+        file_date = extract_date_from_filename(file)
+        if file_date and (latest_tower5_date is None or file_date > latest_tower5_date):
+            latest_tower5_date = file_date
+            latest_tower5_file = file
+
+# Now process only the latest files
+if latest_tower5_file:
+    st.write("✅ Latest Tower 5 file:", latest_tower5_file)
+    response = cos_client.get_object(Bucket="projectreportnew", Key=latest_tower5_file)
+    st.session_state.tower5df, name = process_file_Tower5(io.BytesIO(response['Body'].read()))
+
+if latest_tower4_file:
+    st.write("✅ Latest Tower 4 file:", latest_tower4_file)
+    response = cos_client.get_object(Bucket="projectreportnew", Key=latest_tower4_file)
+    st.session_state.tower4df, name = process_file_Tower4(io.BytesIO(response['Body'].read()))
 
 
 
