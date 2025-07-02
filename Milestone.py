@@ -17,12 +17,12 @@ import io
 from openpyxl.utils import column_index_from_string
 from dateutil.relativedelta import relativedelta
 from datetime import date
-from milestone.veridia import *
-from milestone.EwsLig import *
+from veridia import *
+from EwsLig import *
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
-from milestone.Eligo import *
+from Eligo import *
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
